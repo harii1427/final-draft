@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Form</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #343a40;
+            text-align: center;
+        }
+
+        form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+
+        input[type="submit"] {
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            text-decoration: underline;
+        }
+
+        div {
+            margin-top: 20px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        img, video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            display: block;
+            margin: 10px auto;
+        }
+
+        p {
+            color: #495057;
+            margin-top: 10px;
+        }
+
+        form[action="/"] {
+            margin-top: 20px;
+        }
+
+        ul.flashes {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        ul.flashes li {
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+
+        /* Style for like and dislike buttons */
+        form[action="/"] button {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 7px 10px;
+            background-color: none;
+            border: none;
+        }
+
+
+        form[action="/"] button.like {
+            color: #28a745;
+        }
+
+        form[action="/"] button.dislike {
+            color: #dc3545;
+        }
+        form[action="/"] button.delete {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body>
+    {% if user %}
+        <h1>Welcome, {{ user.username }}!</h1>
+        <form action="/" method="post" enctype="multipart/form-data">
+            <input type="file" name="files[]" multiple accept="image/*,video/*">
+            <input type="submit" value="Upload">
+        </form>
+{% for photo in photos %}
+    <div>
+        {% if photo.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+            <img src="{{ url_for('display_image', filename=photo.filename) }}" alt="{{ photo.filename }}">
+        {% elif photo.filename.lower().endswith('.mp4') %}
+            <video width="320" height="240" controls>
+                <source src="{{ url_for('display_image', filename=photo.filename) }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        {% else %}
+            Unsupported file format
+        {% endif %}
+        <p>Likes: {{ photo.likes | length }}</p>
+        <form action="{{ url_for('like', photo_id=photo.id) }}" method="post" style="display: inline;">
+            <button type="submit" class="like">&#x1F44D;</button>
+        </form>
+        <form action="{{ url_for('dislike', photo_id=photo.id) }}" method="post" style="display: inline;">
+            <button type="submit" class="dislike">&#x1F44E;</button>
+        </form>
+        {% if user.id == photo.user_id %}
+            <form action="{{ url_for('delete_photo', photo_id=photo.id) }}" method="post" style="display: inline; padding-left: 5px;">
+                <button type="submit" class="delete" style="background-color: #dc3545; padding: 5px;">Delete</button>
+            </form>
+        {% endif %}
+    </div>
+{% endfor %}
+
+        <p><a href="{{ url_for('logout') }}">Logout</a></p>
+    {% else %}
+        <p>Please <a href="{{ url_for('login') }}">log in</a> to access this page.</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+</body>
+</html>
